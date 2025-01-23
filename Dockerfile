@@ -1,7 +1,7 @@
-FROM python:3.11.11-slim
+FROM python:3.9-slim
 
-# Création d'un utilisateur non-root
-RUN useradd -m -u 1000 btcuser
+# Création d'un utilisateur non-root avec un UID/GID spécifique
+RUN useradd -u 1000 -U -m -s /bin/bash btcuser
 
 # Configuration du répertoire de travail
 WORKDIR /app
@@ -12,7 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copie du code source et création du répertoire data
 COPY src/ src/
-RUN mkdir data && chown -R btcuser:btcuser /app
+RUN mkdir data && \
+    chown -R btcuser:btcuser /app && \
+    chmod -R 755 /app/src && \
+    chmod 777 /app/data
 
 # Passage à l'utilisateur non-root
 USER btcuser
