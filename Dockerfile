@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11.11-slim
 
 # Création d'un utilisateur non-root avec un UID/GID spécifique
 RUN useradd -u 1000 -U -m -s /bin/bash btcuser
