@@ -42,8 +42,10 @@ class PriceTracker:
         data = [
             {
                 'timestamp': ts,
-                'first_price': prices[0],
-                'last_price': prices[1]
+                'first_price': prices['first']['price'],
+                'last_price': prices['last']['price'],
+                'first_volume': prices['first']['volume'],
+                'last_volume': prices['last']['volume']
             }
             for ts, prices in self.second_prices.items()
         ]
@@ -59,19 +61,27 @@ class PriceTracker:
     async def price_handler(self, msg):
         """Gère les messages du websocket"""
         try:
-            price = float(msg['k']['c'])
+            # Extraction des données du kline
+            kline = msg['k']
+            price = float(kline['c'])  # Prix de clôture
+            volume = float(kline['v'])  # Volume d'échange de la période
+
             timestamp = int(msg['E'] / 1000)  # Conversion directe en secondes
             current_time = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
+            # Structure de données pour stocker prix et volume
             if current_time not in self.second_prices:
-                self.second_prices[current_time] = (price, price)
+                self.second_prices[current_time] = {
+                    'first': {'price': price, 'volume': volume},
+                    'last': {'price': price, 'volume': volume}
+                }
             else:
-                self.second_prices[current_time] = (
-                    self.second_prices[current_time][0],
-                    price
-                )
+                self.second_prices[current_time]['last'] = {
+                    'price': price,
+                    'volume': volume
+                }
 
-            print(f"[{current_time}] {self.symbol.upper()}: ${price:,.2f}")
+            print(f"[{current_time}] {self.symbol.upper()}: ${price:,.2f} | Vol: {volume:,.8f}")
 
             current_second = timestamp
             if self.last_save_second is None or current_second > self.last_save_second:
@@ -80,6 +90,7 @@ class PriceTracker:
 
         except Exception as e:
             print(f"Erreur dans le gestionnaire de prix: {e}")
+            print(f"Message d'erreur complet: {str(e)}")
 
     async def start(self):
         """Démarre le suivi des prix"""
