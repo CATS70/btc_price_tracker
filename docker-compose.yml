@@ -1,0 +1,7 @@
+services:
+  btc-tracker:
+    build:
+      context: .
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
